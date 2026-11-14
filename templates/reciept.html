@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Receipt #{{ payment.payment_id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; background: #f8fafc; }
+        .receipt-box { max-width: 500px; margin: auto; background: white; padding: 30px; border: 2px solid #1e293b; border-radius: 8px; }
+        h2 { text-align: center; margin-top: 0; color: #1e3a8a; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #cbd5e1; }
+        .btn { display: block; width: 100%; text-align: center; background: #2563eb; color: white; padding: 10px; border: none; border-radius: 5px; margin-top: 20px; cursor: pointer; font-weight: bold; }
+        @media print { .btn { display: none; } }
+    </style>
+</head>
+<body>
+<div class="receipt-box">
+    <h2>HOSTEL MESS FEE RECEIPT</h2>
+    <div class="row"><strong>Receipt ID:</strong> <span>#PAY-{{ payment.payment_id }}</span></div>
+    <div class="row"><strong>Student Username:</strong> <span>{{ user.username }}</span></div>
+    <div class="row"><strong>Room / Mess ID:</strong> <span>{{ student.room_no }} / {{ student.mess_id }}</span></div>
+    <div class="row"><strong>Billing Month:</strong> <span>{{ payment.month }}</span></div>
+    <div class="row"><strong>Amount Paid:</strong> <span>₹{{ payment.amount }}</span></div>
+    <div class="row"><strong>Payment Date:</strong> <span>{{ payment.date }}</span></div>
+    <div class="row"><strong>Verification Status:</strong> <span>{{ payment.status }}</span></div>
+    <div class="row"><strong>Warden / MMC Sign:</strong> <span>{{ payment.warden_approved }}</span></div>
+    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mess Staff Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f1f5f9; color: #1e293b; }
+        header { background: #7c2d12; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1100px; margin: 25px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        h3 { margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; color: #7c2d12; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f8fafc; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        .btn { background: #ea580c; color: white; padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .logout { color: #fed7aa; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h2 style="margin:0;">Mess Staff Portal: {{ user.username }}</h2>
+        <small>Job Title: {{ staff.job_title }} | Phone: {{ user.phone_no }}</small>
+    </div>
+    <a class="logout" href="/">Logout</a>
+</header>
+
+<div class="container">
+    <!-- Use Case: View Everyday's Mess Menu -->
+    <div class="card">
+        <h3>1. View Everyday's Mess Menu (Preparation Schedule)</h3>
+        <table>
+            <tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr>
+            {% for m in menu %}
+            <tr><td><strong>{{ m.day }}</strong></td><td>{{ m.breakfast }}</td><td>{{ m.lunch }}</td><td>{{ m.dinner }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: Apply For Leave -->
+        <div class="card">
+            <h3>2. Apply For Leave (applyForLeave)</h3>
+            <form action="/staff/{{ user.username }}/apply-leave" method="post">
+                <label>Start Date:</label>
+                <input type="date" name="start_date" required>
+                <label>End Date:</label>
+                <input type="date" name="end_date" required>
+                <label>Reason for Leave:</label>
+                <textarea name="reason" rows="3" required placeholder="Enter reason for leave request..."></textarea>
+                <button type="submit" class="btn">Submit Leave Application</button>
+            </form>
+        </div>
+
+        <!-- Use Case: Apply For Leave -> Check Status -->
+        <div class="card">
+            <h3>3. Check Leave Application Status (viewLeaveStatus)</h3>
+            <table>
+                <tr><th>Leave ID</th><th>Start Date</th><th>End Date</th><th>Reason</th><th>Status</th></tr>
+                {% for l in leaves %}
+                <tr>
+                    <td>#{{ l.leave_id }}</td>
+                    <td>{{ l.start_date }}</td>
+                    <td>{{ l.end_date }}</td>
+                    <td>{{ l.reason }}</td>
+                    <td><strong>{{ l.status }}</strong></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

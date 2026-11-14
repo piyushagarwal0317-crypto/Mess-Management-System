@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin / Warden / DeanSW Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f1f5f9; color: #1e293b; }
+        header { background: #31102f; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        h3 { margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; color: #31102f; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f8fafc; }
+        input, select { padding: 7px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 8px; }
+        .btn { background: #4f46e5; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-danger { background: #dc2626; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: white; padding: 15px; border-radius: 8px; border-left: 5px solid #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .logout { color: #f9a8d4; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h2 style="margin:0;">Admin / Warden / Office DeanSW Portal: {{ user.username }}</h2>
+        <small>Admin Clearance Level: {{ admin.admin_level }} | Email: {{ user.email }}</small>
+    </div>
+    <a class="logout" href="/">Logout</a>
+</header>
+
+<div class="container">
+    <!-- DFD Level 1: Office DeanSW Revenue Report & Payment Record -->
+    <div class="stats">
+        <div class="stat-box">
+            <strong>Total Revenue Collected (Paid & Verified)</strong>
+            <h2 style="margin:5px 0; color:#16a34a;">₹{{ total_revenue }}</h2>
+        </div>
+        <div class="stat-box" style="border-left-color:#dc2626;">
+            <strong>Pending Student Mess Dues</strong>
+            <h2 style="margin:5px 0; color:#dc2626;">₹{{ pending_dues }}</h2>
+        </div>
+        <div class="stat-box" style="border-left-color:#0284c7;">
+            <strong>Registered Users Count</strong>
+            <h2 style="margin:5px 0; color:#0284c7;">{{ users|length }} Accounts</h2>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: Manage Students & Manage Staff (Create & Edit User Details) -->
+        <div class="card">
+            <h3>1. Create New User Account (Student / Staff / Manager)</h3>
+            <form action="/admin/{{ user.username }}/create-user" method="post">
+                <input type="text" name="new_username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="email" name="email" placeholder="Email Address" required>
+                <input type="text" name="phone_no" placeholder="Phone Number" required>
+                <select name="role" required>
+                    <option value="student">Student</option>
+                    <option value="staff">Mess Staff</option>
+                    <option value="manager">Mess Manager</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <input type="text" name="extra_field1" placeholder="Room No / Job Title / Mess ID">
+                <input type="text" name="extra_field2" placeholder="Mess ID (if Student, e.g. M1)">
+                <button type="submit" class="btn">Create Account</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>2. Edit User Contact Details (Activity Diagram: Edit User Details)</h3>
+            <form action="/admin/{{ user.username }}/edit-user" method="post">
+                <select name="target_username" required>
+                    {% for u in users %}<option value="{{ u.username }}">{{ u.username }} ({{ u.role }})</option>{% endfor %}
+                </select>
+                <input type="email" name="email" placeholder="New Email" required>
+                <input type="text" name="phone_no" placeholder="New Phone Number" required>
+                <button type="submit" class="btn">Update Details</button>
+            </form>
+            <p style="font-size:12px; color:#64748b;">Maps to Admin Activity Swimlane: Manage Users &rarr; Edit User Details &rarr; Store Data.</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: Manage Students <<extend>> Check Student Details -->
+        <div class="card">
+            <h3>3. Manage Students &lt;&lt;extend&gt;&gt; Check Student Details</h3>
+            <table>
+                <tr><th>Username</th><th>Room</th><th>Mess</th><th>Reg Status</th><th>Action</th></tr>
+                {% for s in students %}
+                <tr>
+                    <td><strong>{{ s.username }}</strong></td>
+                    <td>{{ s.room_no }}</td>
+                    <td>{{ s.mess_id }}</td>
+                    <td>{{ s.is_registered }}</td>
+                    <td>
+                        <form action="/admin/{{ user.username }}/delete-user/{{ s.username }}" method="post">
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Use Case: Manage Staff <<extend>> Check Staff Details -->
+        <div class="card">
+            <h3>4. Manage Staff &lt;&lt;extend&gt;&gt; Check Staff Details & Leave Override</h3>
+            <table>
+                <tr><th>Username</th><th>Job Title</th><th>Action</th></tr>
+                {% for st in staff_list %}
+                <tr>
+                    <td><strong>{{ st.username }}</strong></td>
+                    <td>{{ st.job_title }}</td>
+                    <td>
+                        <form action="/admin/{{ user.username }}/delete-user/{{ st.username }}" method="post">
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <h4 style="margin:15px 0 5px;">Staff Leave Requests (DFD Level 0 Admin Override)</h4>
+            <table>
+                <tr><th>Staff</th><th>Dates</th><th>Status</th><th>Override</th></tr>
+                {% for l in leaves %}
+                <tr>
+                    <td>{{ l.staff_id }}</td>
+                    <td>{{ l.start_date }} to {{ l.end_date }}</td>
+                    <td><strong>{{ l.status }}</strong></td>
+                    <td>
+                        <form action="/admin/{{ user.username }}/leave/{{ l.leave_id }}" method="post">
+                            <select name="decision">
+                                <option value="Approved by Admin">Approve</option>
+                                <option value="Rejected by Admin">Reject</option>
+                            </select>
+                            <button type="submit" class="btn">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Use Case: Monitor Payments & DFD Level 1 Warden Sign/Approve Bill -->
+    <div class="card">
+        <h3>5. Monitor Payments, Revenue Reports & Warden Bill Approval (DFD Level 1)</h3>
+        <table>
+            <tr><th>Bill ID</th><th>Student</th><th>Month</th><th>Amount</th><th>Date</th><th>Payment Status</th><th>Warden / MMC Sign</th><th>Action</th></tr>
+            {% for p in payments %}
+            <tr>
+                <td>#{{ p.payment_id }}</td>
+                <td>{{ p.student_id }}</td>
+                <td>{{ p.month }}</td>
+                <td>₹{{ p.amount }}</td>
+                <td>{{ p.date }}</td>
+                <td><strong>{{ p.status }}</strong></td>
+                <td>{{ p.warden_approved }}</td>
+                <td>
+                    {% if p.warden_approved != 'Signed & Approved' %}
+                    <form action="/admin/{{ user.username }}/approve-bill/{{ p.payment_id }}" method="post">
+                        <button type="submit" class="btn">Sign & Approve Bill</button>
+                    </form>
+                    {% else %}
+                    <span style="color:#16a34a; font-weight:bold;">✓ Signed</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+</body>
+</html>

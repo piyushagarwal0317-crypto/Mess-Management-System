@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mess Manager Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f1f5f9; color: #1e293b; }
+        header { background: #0f766e; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        h3 { margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; color: #0f766e; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f8fafc; }
+        input, select { padding: 7px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 8px; }
+        .btn { background: #0f766e; color: white; padding: 7px 12px; border: none; border-radius: 4px; cursor: pointer; }
+        .alert { background: #fee2e2; color: #b91c1c; font-weight: bold; }
+        .logout { color: #fef08a; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h2 style="margin:0;">Mess Manager Portal: {{ user.username }}</h2>
+        <small>Managing Mess ID: {{ manager.manage_mess_id }} | Email: {{ user.email }}</small>
+    </div>
+    <a class="logout" href="/">Logout</a>
+</header>
+
+<div class="container">
+    <!-- Use Case: Update Weekly Menu (updateMeal) -->
+    <div class="card">
+        <h3>1. Update Weekly Menu (Class Method: updateMeal)</h3>
+        <form action="/manager/{{ user.username }}/update-menu" method="post" style="margin-bottom: 15px;">
+            <select name="day" required>
+                {% for m in menu %}<option value="{{ m.day }}">{{ m.day }}</option>{% endfor %}
+            </select>
+            <select name="meal_type" required>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+            </select>
+            <input type="text" name="item" placeholder="Enter new meal items..." style="width: 350px;" required>
+            <button type="submit" class="btn">Update Meal</button>
+        </form>
+        <table>
+            <tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr>
+            {% for m in menu %}
+            <tr><td><strong>{{ m.day }}</strong></td><td>{{ m.breakfast }}</td><td>{{ m.lunch }}</td><td>{{ m.dinner }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: Manage Student Registrations -->
+        <div class="card">
+            <h3>2. Manage Student Registrations</h3>
+            <form action="/manager/{{ user.username }}/student-reg" method="post" style="margin-bottom:10px;">
+                <select name="student_username" required>
+                    {% for s in students %}<option value="{{ s.username }}">{{ s.username }}</option>{% endfor %}
+                </select>
+                <input type="text" name="room_no" placeholder="Room No (e.g. BH-202)" required style="width:110px;">
+                <input type="text" name="mess_id" value="M1" required style="width:60px;">
+                <select name="reg_status">
+                    <option value="Approved">Approve</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Rejected">Reject</option>
+                </select>
+                <button type="submit" class="btn">Update</button>
+            </form>
+            <table>
+                <tr><th>Student</th><th>Room No</th><th>Mess ID</th><th>Registration Status</th></tr>
+                {% for s in students %}
+                <tr><td>{{ s.username }}</td><td>{{ s.room_no }}</td><td>{{ s.mess_id }}</td><td><strong>{{ s.is_registered }}</strong></td></tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Use Case: Generate Monthly Bill (generateBill) -->
+        <div class="card">
+            <h3>3. Generate Monthly Bill (Class Method: generateBill)</h3>
+            <form action="/manager/{{ user.username }}/generate-bill" method="post" style="margin-bottom:10px;">
+                <select name="student_id" required>
+                    <option value="ALL">All Approved Students</option>
+                    {% for s in students %}<option value="{{ s.username }}">{{ s.username }}</option>{% endfor %}
+                </select>
+                <input type="text" name="month" placeholder="Month (e.g. Dec 2026)" required style="width:130px;">
+                <input type="number" step="0.01" name="amount" placeholder="Amount (₹)" required style="width:100px;">
+                <button type="submit" class="btn">Generate Bill</button>
+            </form>
+            <table>
+                <tr><th>ID</th><th>Student</th><th>Month</th><th>Amount</th><th>Status</th></tr>
+                {% for b in bills %}
+                <tr><td>#{{ b.payment_id }}</td><td>{{ b.student_id }}</td><td>{{ b.month }}</td><td>₹{{ b.amount }}</td><td>{{ b.status }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: View Complaints & Update Status -->
+        <div class="card">
+            <h3>4. View & Process Student Complaints</h3>
+            <table>
+                <tr><th>ID</th><th>Student</th><th>Issue</th><th>Status</th><th>Update</th></tr>
+                {% for c in complaints %}
+                <tr>
+                    <td>#{{ c.complaint_id }}</td>
+                    <td>{{ c.student_id }}</td>
+                    <td>{{ c.text }}</td>
+                    <td><strong>{{ c.status }}</strong></td>
+                    <td>
+                        <form action="/manager/{{ user.username }}/complaint/{{ c.complaint_id }}" method="post">
+                            <select name="new_status">
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <button type="submit" class="btn">Save</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Use Case: Manage Mess Staff <<extend>> Approve / Reject Staff Leave -->
+        <div class="card">
+            <h3>5. Manage Mess Staff & Approve/Reject Leave</h3>
+            <table>
+                <tr><th>Staff</th><th>Start</th><th>End</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+                {% for l in leaves %}
+                <tr>
+                    <td>{{ l.staff_id }}</td>
+                    <td>{{ l.start_date }}</td>
+                    <td>{{ l.end_date }}</td>
+                    <td>{{ l.reason }}</td>
+                    <td><strong>{{ l.status }}</strong></td>
+                    <td>
+                        <form action="/manager/{{ user.username }}/leave/{{ l.leave_id }}" method="post">
+                            <select name="decision">
+                                <option value="Approved">Approve</option>
+                                <option value="Rejected">Reject</option>
+                            </select>
+                            <button type="submit" class="btn">Go</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- DFD Level 1: Record Attendance & Stock Updates (with Stock Alerts) -->
+    <div class="grid">
+        <div class="card">
+            <h3>6. Inventory Stock Management & Low-Stock Alerts (DFD Level 1)</h3>
+            <form action="/manager/{{ user.username }}/stock" method="post" style="margin-bottom:10px;">
+                <input type="text" name="item_name" placeholder="Item (e.g. Rice)" required style="width:110px;">
+                <input type="number" step="0.1" name="quantity" placeholder="Qty" required style="width:70px;">
+                <input type="text" name="unit" placeholder="Unit (kg/L)" required style="width:70px;">
+                <input type="number" step="0.1" name="alert_threshold" placeholder="Min Alert" required style="width:80px;">
+                <button type="submit" class="btn">Update Stock</button>
+            </form>
+            <table>
+                <tr><th>Item</th><th>Available Qty</th><th>Min Threshold</th><th>Stock Alert Status</th></tr>
+                {% for st in stocks %}
+                <tr class="{% if st.quantity <= st.alert_threshold %}alert{% endif %}">
+                    <td>{{ st.item_name }}</td>
+                    <td>{{ st.quantity }} {{ st.unit }}</td>
+                    <td>{{ st.alert_threshold }} {{ st.unit }}</td>
+                    <td>{% if st.quantity <= st.alert_threshold %}LOW STOCK ALERT!{% else %}Sufficient{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>7. Record Daily Attendance (DFD Level 1)</h3>
+            <form action="/manager/{{ user.username }}/attendance" method="post" style="margin-bottom:10px;">
+                <input type="text" name="person_id" placeholder="Username (e.g. staff1)" required>
+                <select name="role">
+                    <option value="MessStaff">Mess Staff</option>
+                    <option value="Student">Student</option>
+                </select>
+                <select name="status">
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                </select>
+                <button type="submit" class="btn">Log Attendance</button>
+            </form>
+            <table>
+                <tr><th>Date</th><th>Username</th><th>Role</th><th>Status</th></tr>
+                {% for a in attendance %}
+                <tr><td>{{ a.date }}</td><td>{{ a.person_id }}</td><td>{{ a.role }}</td><td>{{ a.status }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

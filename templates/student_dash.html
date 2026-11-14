@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard - Mess Management</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f1f5f9; color: #1e293b; }
+        header { background: #1e3a8a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1150px; margin: 25px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        h3 { margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; color: #1e3a8a; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f8fafc; }
+        .btn { background: #16a34a; color: white; padding: 7px 14px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; }
+        .btn-blue { background: #2563eb; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .pending { background: #fef3c7; color: #b45309; }
+        .resolved { background: #dcfce7; color: #15803d; }
+        textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .logout { color: #fca5a5; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h2 style="margin:0;">Student Portal: {{ user.username }}</h2>
+        <small>Room: {{ student.room_no }} | Mess ID: {{ student.mess_id }} | Email: {{ user.email }} | Registration: {{ student.is_registered }}</small>
+    </div>
+    <a class="logout" href="/">Logout</a>
+</header>
+
+<div class="container">
+    <!-- Use Case: View Weekly Menu -->
+    <div class="card">
+        <h3>1. View Weekly Mess Menu</h3>
+        <table>
+            <tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr>
+            {% for item in menu %}
+            <tr>
+                <td><strong>{{ item.day }}</strong></td>
+                <td>{{ item.breakfast }}</td>
+                <td>{{ item.lunch }}</td>
+                <td>{{ item.dinner }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: View Monthly Bills & Pay Mess Fee (<<extend>> Verify Payment Details) -->
+        <div class="card">
+            <h3>2. View Monthly Bills & Pay Mess Fee</h3>
+            {% if unpaid_bills %}
+            <table>
+                <tr><th>Bill ID</th><th>Month</th><th>Amount</th><th>Warden Sign</th><th>Action</th></tr>
+                {% for bill in unpaid_bills %}
+                <tr>
+                    <td>#{{ bill.payment_id }}</td>
+                    <td>{{ bill.month }}</td>
+                    <td>₹{{ bill.amount }}</td>
+                    <td>{{ bill.warden_approved }}</td>
+                    <td>
+                        <form action="/student/{{ user.username }}/pay/{{ bill.payment_id }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn">Verify & Pay Now</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p style="color: #16a34a; font-weight: bold;">No pending monthly bills! All dues cleared.</p>
+            {% endif %}
+        </div>
+
+        <!-- Use Case: View Payment History & <<extend>> Download Receipt -->
+        <div class="card">
+            <h3>3. View Payment History & Download Receipt</h3>
+            <table>
+                <tr><th>ID</th><th>Month</th><th>Amount</th><th>Paid Date</th><th>Status</th><th>Receipt</th></tr>
+                {% for p in payment_history %}
+                <tr>
+                    <td>#{{ p.payment_id }}</td>
+                    <td>{{ p.month }}</td>
+                    <td>₹{{ p.amount }}</td>
+                    <td>{{ p.date }}</td>
+                    <td><span class="badge resolved">{{ p.status }}</span></td>
+                    <td><a class="btn btn-blue" href="/student/{{ user.username }}/receipt/{{ p.payment_id }}" target="_blank">Receipt</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Use Case: Submit Complaint -->
+        <div class="card">
+            <h3>4. Submit Mess Complaint / Feedback</h3>
+            <form action="/student/{{ user.username }}/complaint" method="post">
+                <textarea name="text" rows="4" required placeholder="Describe food quality, hygiene, or billing issue..."></textarea><br><br>
+                <button type="submit" class="btn btn-blue">Submit Complaint</button>
+            </form>
+        </div>
+
+        <!-- DFD Level 0 & 1: Complaint/Feedback Status Update -->
+        <div class="card">
+            <h3>5. My Complaint History & Status</h3>
+            <table>
+                <tr><th>ID</th><th>Date</th><th>Complaint Text</th><th>Status</th></tr>
+                {% for c in complaints %}
+                <tr>
+                    <td>#{{ c.complaint_id }}</td>
+                    <td>{{ c.date }}</td>
+                    <td>{{ c.text }}</td>
+                    <td><span class="badge {% if c.status == 'Resolved' %}resolved{% else %}pending{% endif %}">{{ c.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
